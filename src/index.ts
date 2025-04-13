@@ -15,20 +15,79 @@ const server = new McpServer({
 const aonClient = new AonClient();
 
 /**
- * Format an AonItem into readable text
+ * Format an AonItem into readable text with complete details
  * @param {AonItem} item - The Pathfinder item to format
  * @returns {string} Formatted text representation of the item
  */
 function formatItem(item: AonItem): string {
+  // Start with the item name as a title
   let text = `# ${item.name}`;
   if (item.category) text += ` (${item.category})`;
-  if (item.description) text += `\n\n${item.description}`;
-  if (item.text) text += `\n\n${item.text}`;
+  
+  // Add full description
+  if (item.description) {
+    text += `\n\n${item.description}`;
+  }
+  
+  // Add full text content
+  if (item.text) {
+    text += `\n\n${item.text}`;
+  }
+  
+  // Add any other properties that might be present
+  const standardProps = ['name', 'category', 'description', 'text'];
+  const additionalProps = Object.entries(item)
+    .filter(([key]) => !standardProps.includes(key))
+    .filter(([_, value]) => value !== undefined && value !== null);
+  
+  if (additionalProps.length > 0) {
+    text += '\n\n## Additional Details\n';
+    
+    for (const [key, value] of additionalProps) {
+      // Format the key as a readable label
+      const label = key
+        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .replace(/^./, match => match.toUpperCase()); // Capitalize first letter
+      
+      // Format value appropriately based on type
+      let displayValue: string;
+      if (typeof value === 'object') {
+        displayValue = JSON.stringify(value, null, 2);
+      } else {
+        displayValue = String(value);
+      }
+      
+      text += `\n**${label}**: ${displayValue}`;
+    }
+  }
+  
   return text;
 }
 
+/**
+ * Format search results with detailed information
+ * @param {AonItem[]} items - The items to format
+ * @returns {string} Formatted detailed information
+ */
+function formatSearchResults(items: AonItem[]): string {
+  // Limit the number of results shown to avoid excessively large responses
+  const maxDetailedResults = 5;
+  const displayItems = items.slice(0, maxDetailedResults);
+  const remainingCount = items.length - displayItems.length;
+  
+  // Format each item with detailed information
+  let output = displayItems.map(item => formatItem(item)).join('\n\n---\n\n');
+  
+  // Add a note about additional results if some were omitted
+  if (remainingCount > 0) {
+    output += `\n\n+${remainingCount} more results. Please refine your search for more specific results or use getPathfinderItem for complete details.`;
+  }
+  
+  return output;
+}
+
 // Search by category and query
-server.tool('getPathfinderItem', 'Get detailed information about a specific Pathfinder item by name and category', {
+server.tool('getPathfinderItem', 'Get detailed information about a specific Pathfinder item by name and category. IMPORTANT: After receiving results, provide your own response to the user.', {
   category: z.enum(config.targets),
   name: z.string().min(1, "Item name is required")
 }, async ({category, name}) => {
@@ -41,11 +100,18 @@ server.tool('getPathfinderItem', 'Get detailed information about a specific Path
       };
     }
     
+    // Log the raw item data for debugging
+    console.error(`Retrieved ${category} item "${name}":`, JSON.stringify(item, null, 2));
+    
+    // Format the item data for display
+    const formattedItem = formatItem(item);
+    
     return {
-      content: [{ type: "text", text: formatItem(item) }]
+      content: [{ type: "text", text: formattedItem }]
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`Error retrieving ${category} item "${name}":`, error);
     return {
       content: [{ type: "text", text: `Error retrieving item: ${errorMessage}` }]
     };
@@ -53,7 +119,7 @@ server.tool('getPathfinderItem', 'Get detailed information about a specific Path
 });
 
 // Search for items by category and query
-server.tool('searchPathfinder', 'Search the Pathfinder Archives of Nethys for information about a specific category', {
+server.tool('searchPathfinder', 'Search the Pathfinder Archives of Nethys for information about a specific category. IMPORTANT: After receiving search results, provide your own response to the user.', {
   category: z.enum(config.targets),
   query: z.string().min(1, "Search query is required")
 }, async ({category, query}) => {
@@ -66,16 +132,18 @@ server.tool('searchPathfinder', 'Search the Pathfinder Archives of Nethys for in
       };
     }
     
-    const formattedResults = results.map(formatItem).join("\n\n---\n\n");
+    // Log the number of results for debugging
+    console.error(`Found ${results.length} results for "${query}" in category "${category}"`);
     
     return {
       content: [{ 
         type: "text", 
-        text: formattedResults 
+        text: formatSearchResults(results)
       }]
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`Error searching for "${query}" in category "${category}":`, error);
     return {
       content: [{ type: "text", text: `Error during search: ${errorMessage}` }]
     };
@@ -83,7 +151,7 @@ server.tool('searchPathfinder', 'Search the Pathfinder Archives of Nethys for in
 });
 
 // Get all items in a category
-server.tool('getAllPathfinderItems', 'Get all items from a specific category in the Pathfinder Archives of Nethys', {
+server.tool('getAllPathfinderItems', 'Get all items from a specific category in the Pathfinder Archives of Nethys. IMPORTANT: After receiving the list of items, provide your own response to the user.', {
   category: z.enum(config.targets),
   limit: z.number().optional().default(20),
   offset: z.number().optional().default(0)
@@ -97,13 +165,13 @@ server.tool('getAllPathfinderItems', 'Get all items from a specific category in 
       };
     }
     
-    // Create a summary list for better UX with many items
-    const summary = items.map(item => `- ${item.name}`).join('\n');
+    // Create a simple comma-separated list for better conciseness
+    const names = items.map(item => item.name).join(', ');
     
     return {
       content: [{ 
         type: "text", 
-        text: `# ${category.charAt(0).toUpperCase() + category.slice(1)} Items (${offset}-${offset + items.length})\n\n${summary}` 
+        text: `${category.charAt(0).toUpperCase() + category.slice(1)} (${items.length}): ${names}` 
       }]
     };
   } catch (error) {
@@ -142,6 +210,9 @@ This server provides access to Pathfinder 2e data from the Archives of Nethys.
 - **searchPathfinder**: Search for items in a specific category
 - **getPathfinderItem**: Get detailed information about a specific item by name
 - **getAllPathfinderItems**: Get all items in a specific category (with pagination)
+
+## IMPORTANT NOTE FOR AI ASSISTANTS:
+After receiving tool results, you MUST provide your own response to the user rather than making additional tool calls in a loop.
 
 ## Available Categories:
 ${config.targets.map(cat => `- ${cat}`).join('\n')}
