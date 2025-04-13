@@ -3,8 +3,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { AonClient } from './client/aon-client.js';
 import { config, AonCategory } from './config/config.js';
-import { AonItem } from './config/types.js';
 import TreasureGenerator from './utils/treasure-generator.js';
+import { formatItem } from "./utils/items.js";
+import { formatSearchResults } from "./utils/search.js";
 
 // Create an MCP server instance
 const server = new McpServer({
@@ -15,80 +16,10 @@ const server = new McpServer({
 // Initialize Elasticsearch client
 const aonClient = new AonClient();
 
-/**
- * Format an AonItem into readable text with complete details
- * @param {AonItem} item - The Pathfinder item to format
- * @returns {string} Formatted text representation of the item
- */
-function formatItem(item: AonItem): string {
-  // Start with the item name as a title
-  let text = `# ${item.name}`;
-  if (item.category) text += ` (${item.category})`;
-  
-  // Add full description
-  if (item.description) {
-    text += `\n\n${item.description}`;
-  }
-  
-  // Add full text content
-  if (item.text) {
-    text += `\n\n${item.text}`;
-  }
-  
-  // Add any other properties that might be present
-  const standardProps = ['name', 'category', 'description', 'text'];
-  const additionalProps = Object.entries(item)
-    .filter(([key]) => !standardProps.includes(key))
-    .filter(([_, value]) => value !== undefined && value !== null);
-  
-  if (additionalProps.length > 0) {
-    text += '\n\n## Additional Details\n';
-    
-    for (const [key, value] of additionalProps) {
-      // Format the key as a readable label
-      const label = key
-        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-        .replace(/^./, match => match.toUpperCase()); // Capitalize first letter
-      
-      // Format value appropriately based on type
-      let displayValue: string;
-      if (typeof value === 'object') {
-        displayValue = JSON.stringify(value, null, 2);
-      } else {
-        displayValue = String(value);
-      }
-      
-      text += `\n**${label}**: ${displayValue}`;
-    }
-  }
-  
-  return text;
-}
 
-/**
- * Format search results with detailed information
- * @param {AonItem[]} items - The items to format
- * @returns {string} Formatted detailed information
- */
-function formatSearchResults(items: AonItem[]): string {
-  // Limit the number of results shown to avoid excessively large responses
-  const maxDetailedResults = 5;
-  const displayItems = items.slice(0, maxDetailedResults);
-  const remainingCount = items.length - displayItems.length;
-  
-  // Format each item with detailed information
-  let output = displayItems.map(item => formatItem(item)).join('\n\n---\n\n');
-  
-  // Add a note about additional results if some were omitted
-  if (remainingCount > 0) {
-    output += `\n\n+${remainingCount} more results. Please refine your search for more specific results or use getPathfinderItem for complete details.`;
-  }
-  
-  return output;
-}
 
 // Search by category and query
-server.tool('getPathfinderItem', 'Get detailed information about a specific Pathfinder item by name and category. IMPORTANT: After receiving results, provide your own response to the user.', {
+server.tool('getPathfinderItem', 'Get detailed information about a specific Pathfinder item by name and category with a few results. IMPORTANT: After receiving results, provide your own response to the user.', {
   category: z.enum(config.targets),
   name: z.string().min(1, "Item name is required")
 }, async ({category, name}) => {
@@ -152,7 +83,7 @@ server.tool('searchPathfinder', 'Search the Pathfinder Archives of Nethys for in
 });
 
 // Get all items in a category
-server.tool('getAllPathfinderItems', 'Get all items from a specific category in the Pathfinder Archives of Nethys. IMPORTANT: After receiving the list of items, provide your own response to the user.', {
+server.tool('getAllPathfinderItems', 'Get all items from a specific category in the Pathfinder Archives of Nethys with all the results available good for generating treasure. IMPORTANT: After receiving the list of items, provide your own response to the user.', {
   category: z.enum(config.targets),
   limit: z.number().optional().default(20),
   offset: z.number().optional().default(0)
@@ -222,6 +153,59 @@ server.tool('generateTreasure', 'Generate appropriate treasure for a Pathfinder 
   }
 });
 
+// Get all items by level (for treasure generation)
+server.tool('getItemsByLevel', 'Retrieve all items of a specific level for treasure generation purposes. IMPORTANT: After receiving items, provide your own response to the user.', {
+  level: z.number().int().min(0).max(25).describe("The item level to search for (0-25)"),
+  categories: z.array(z.enum(config.targets)).optional().describe("Optional categories to include in the search")
+}, async ({level, categories}) => {
+  try {
+    const items = await aonClient.getItemsByLevel(level, categories);
+    
+    if (items.length === 0) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `No items found at level ${level}.` 
+        }]
+      };
+    }
+    
+    // Group items by category for better organization
+    const itemsByCategory: Record<string, string[]> = {};
+    
+    items.forEach(item => {
+      const category = item.category || 'unknown';
+      if (!itemsByCategory[category]) {
+        itemsByCategory[category] = [];
+      }
+      itemsByCategory[category].push(item.name);
+    });
+    
+    // Format the results
+    let result = `# Level ${level} Items (${items.length} total)\n\n`;
+    
+    for (const [category, names] of Object.entries(itemsByCategory)) {
+      result += `## ${category.charAt(0).toUpperCase() + category.slice(1)} (${names.length})\n`;
+      result += names.join(', ') + '\n\n';
+    }
+    
+    return {
+      content: [{ 
+        type: "text", 
+        text: result 
+      }]
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return {
+      content: [{ 
+        type: "text", 
+        text: `Error retrieving items of level ${level}: ${errorMessage}` 
+      }]
+    };
+  }
+});
+
 // Add a resource to provide information about the available categories
 server.resource(
   "pathfinder-categories",
@@ -247,10 +231,11 @@ This server provides access to Pathfinder 2e data from the Archives of Nethys.
 
 ## Available Tools:
 
-- **searchPathfinder**: Search for items in a specific category
+- **searchPathfinder**: Search for items in a specific category with a few results
 - **getPathfinderItem**: Get detailed information about a specific item by name
-- **getAllPathfinderItems**: Get all items in a specific category (with pagination)
+- **getAllPathfinderItems**: Get all items in a specific category (with pagination) useful when generating treasure
 - **generateTreasure**: Generate appropriate treasure for a Pathfinder 2e party based on a prompt
+- **getItemsByLevel**: Retrieve all items of a specific level for treasure generation purposes
 
 ## IMPORTANT NOTE FOR AI ASSISTANTS:
 After receiving tool results, you MUST provide your own response to the user rather than making additional tool calls in a loop.
@@ -271,6 +256,13 @@ getAllPathfinderItems({ category: "feat", limit: 10, offset: 0 })
 
 // Generate treasure for a party
 generateTreasure({ partyLevel: 5, partySize: 4, isSandbox: false })
+
+// Get all items of level 5 for treasure generation
+getItemsByLevel({ level: 5 })
+
+// Get equipment items of level 5 for treasure generation
+getItemsByLevel({ level: 5, categories: ["equipment", "armor", "weapon", "shield"] })
+
 \`\`\`
 
 ## Treasure Generation Details
@@ -294,6 +286,17 @@ Example parameter combinations:
 - \`{ partyLevel: 10, partySize: 6, isSandbox: false }\` - Large party at level 10
 - \`{ partyLevel: 8, partySize: 4, isSandbox: true }\` - Standard party in a sandbox campaign
 - \`{ partyLevel: 3, partySize: 5, isSandbox: true }\` - Large party in a megadungeon
+
+## Item Retrieval by Level
+
+The **getItemsByLevel** tool is designed specifically for treasure generation and will:
+
+1. Retrieve all items of a specific level (0-25) with these parameters:
+   - **level**: The item level to search for
+   - **categories**: (Optional) Specific categories to include in the search avoid this unles directly asked for treasure generation
+
+
+This tool works well with generateTreasure to find specific items to include in treasure hoards.
 `
     }]
   })

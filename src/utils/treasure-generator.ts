@@ -8,8 +8,8 @@ import { TREASURE_BY_LEVEL, TreasureBudget } from './treasure-by-level.js';
 export default class TreasureGenerator {
   /**
    * Parse a natural language prompt to extract party level, size, and campaign type
-   * @param prompt A natural language description of the party and context
-   * @returns Extracted parameters for treasure generation
+   * @param {string} prompt - A natural language description of the party and context
+   * @returns {object} Extracted parameters for treasure generation
    */
   private static parsePrompt(prompt: string): {
     partyLevel: number;
@@ -53,10 +53,10 @@ export default class TreasureGenerator {
   
   /**
    * Calculate treasure budget for a party
-   * @param partyLevel The level of the party
-   * @param partySize The number of players in the party
-   * @param isSandbox Whether this is a sandbox campaign (adds extra treasure)
-   * @returns The adjusted treasure budget for the party
+   * @param {number} partyLevel - The level of the party
+   * @param {number} partySize - The number of players in the party
+   * @param {boolean} isSandbox - Whether this is a sandbox campaign (adds extra treasure)
+   * @returns {TreasureBudget|null} The adjusted treasure budget for the party
    */
   public static calculateTreasureBudget(
     partyLevel: number,
@@ -128,9 +128,12 @@ export default class TreasureGenerator {
   
   /**
    * Format the treasure budget into a readable string
-   * @param budget The treasure budget to format
-   * @param context Additional context about the prompt
-   * @returns A formatted string describing the treasure
+   * @param {TreasureBudget} budget - The treasure budget to format
+   * @param {object} context - Additional context about the prompt
+   * @param {number} context.partyLevel - The level of the party
+   * @param {number} context.partySize - The number of players in the party
+   * @param {boolean} context.isSandbox - Whether this is a sandbox campaign
+   * @returns {string} A formatted string describing the treasure
    */
   public static formatTreasureBudget(budget: TreasureBudget, context: {
     partyLevel: number;
@@ -182,8 +185,8 @@ ${budget.partyCurrency} gold pieces
   
   /**
    * Generate a treasure budget based on a natural language prompt
-   * @param prompt A description of the party and situation
-   * @returns A formatted treasure budget
+   * @param {string} prompt - A description of the party and situation
+   * @returns {string} A formatted treasure budget
    */
   public static generateTreasureBudget(prompt: string): string {
     // Extract parameters from the prompt

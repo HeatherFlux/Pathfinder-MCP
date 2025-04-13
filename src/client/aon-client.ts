@@ -101,14 +101,31 @@ export class AonClient {
         from: 0,
         size: 100,
         query: searchQuery,
-        min_score: 5 // Filter out poor quality matches
+        min_score: 5, // Filter out poor quality matches
+        _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
       });
 
       if (!search.hits?.hits) {
         throw new Error('Invalid response from Elasticsearch');
       }
 
-      return search.hits.hits.map((hit) => hit._source as AonItem);
+      return search.hits.hits.map((hit) => {
+        const item = hit._source as AonItem;
+        
+        // Add URL to the item
+        if (!item.url) {
+          item.url = this.constructAonUrl(item);
+        }
+        
+        // Ensure price is present and formatted consistently
+        if (item.price === undefined) {
+          item.price = "—";
+        } else if (typeof item.price === 'number') {
+          item.price = `${item.price} gp`;
+        }
+        
+        return item;
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Error searching ${category} for "${query}":`, errorMessage);
@@ -215,40 +232,59 @@ export class AonClient {
             ]
           }
         },
-        size: 1
+        size: 1,
+        _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
       });
+
+      let result: AonItem | null = null;
 
       if (exactSearch.hits?.hits && exactSearch.hits.hits.length > 0) {
-        return exactSearch.hits.hits[0]._source as AonItem;
-      }
-
-      // If no exact match, try a more lenient search
-      const fuzzySearch = await this.client.search({
-        index: config.index,
-        query: {
-          bool: {
-            must: [
-              { term: { category } },
-              {
-                match: {
-                  name: {
-                    query: trimmedName,
-                    fuzziness: "AUTO",
-                    operator: "and"
+        result = exactSearch.hits.hits[0]._source as AonItem;
+      } else {
+        // If no exact match, try a more lenient search
+        const fuzzySearch = await this.client.search({
+          index: config.index,
+          query: {
+            bool: {
+              must: [
+                { term: { category } },
+                {
+                  match: {
+                    name: {
+                      query: trimmedName,
+                      fuzziness: "AUTO",
+                      operator: "and"
+                    }
                   }
                 }
-              }
-            ]
-          }
-        },
-        size: 1
-      });
+              ]
+            }
+          },
+          size: 1,
+          _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
+        });
 
-      if (!fuzzySearch.hits?.hits || fuzzySearch.hits.hits.length === 0) {
-        return null;
+        if (!fuzzySearch.hits?.hits || fuzzySearch.hits.hits.length === 0) {
+          return null;
+        }
+
+        result = fuzzySearch.hits.hits[0]._source as AonItem;
       }
 
-      return fuzzySearch.hits.hits[0]._source as AonItem;
+      // Add URL and format price
+      if (result) {
+        if (!result.url) {
+          result.url = this.constructAonUrl(result);
+        }
+        
+        if (result.price === undefined) {
+          result.price = "—";
+        } else if (typeof result.price === 'number') {
+          result.price = `${result.price} gp`;
+        }
+      }
+
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Error retrieving ${category} item "${name}":`, errorMessage);
@@ -299,14 +335,31 @@ export class AonClient {
         },
         from,
         size,
-        sort: [{ "name.keyword": { order: "asc" } }]
+        sort: [{ "name.keyword": { order: "asc" } }],
+        _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
       });
 
       if (!search.hits?.hits) {
         throw new Error('Invalid response from Elasticsearch');
       }
 
-      return search.hits.hits.map((hit) => hit._source as AonItem);
+      return search.hits.hits.map((hit) => {
+        const item = hit._source as AonItem;
+        
+        // Add URL to the item
+        if (!item.url) {
+          item.url = this.constructAonUrl(item);
+        }
+        
+        // Ensure price is present and formatted consistently
+        if (item.price === undefined) {
+          item.price = "—";
+        } else if (typeof item.price === 'number') {
+          item.price = `${item.price} gp`;
+        }
+        
+        return item;
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Error retrieving all ${category} items:`, errorMessage);
@@ -315,8 +368,213 @@ export class AonClient {
   }
 
   /**
+   * Constructs a URL to the Archives of Nethys page for an item
+   * @param {AonItem} item - The item to generate a URL for
+   * @returns {string} The URL to the item on Archives of Nethys
+   * @private
+   */
+  private constructAonUrl(item: AonItem): string {
+    // If the item already has a URL in the data, use it (but ensure it's absolute)
+    if (typeof item.url === 'string' && item.url.startsWith('/')) {
+      return `https://2e.aonprd.com${item.url}`;
+    }
+    
+    // Map category to AoN URL paths
+    const categoryMap: Record<string, string> = {
+      'spell': 'spells',
+      'feat': 'feats',
+      'equipment': 'equipment',
+      'weapon': 'equipment',
+      'armor': 'equipment',
+      'shield': 'equipment',
+      'vehicle': 'equipment',
+      'siege-weapon': 'equipment',
+      'class': 'classes',
+      'ancestry': 'ancestries',
+      'background': 'backgrounds',
+      'archetype': 'archetypes',
+      'creature': 'monsters'
+    };
+    
+    // Extract item ID from the data if available
+    let itemId = '';
+    if (typeof item.id === 'string' && item.id.includes('-')) {
+      const idParts = item.id.split('-');
+      if (idParts.length >= 2) {
+        itemId = idParts[idParts.length - 1];
+      }
+    }
+    
+    // Get URL path from map or use generic 'rules' for unknown categories
+    const urlPath = categoryMap[item.category] || 'rules';
+    
+    // Format the name for URL (lowercase, spaces to hyphens)
+    const formattedName = item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    return `https://2e.aonprd.com/${urlPath}.aspx?ID=${itemId}&Name=${formattedName}`;
+  }
+
+  /**
+   * Retrieves all items of a specific level for treasure generation
+   * 
+   * @param {number} level - The item level to search for
+   * @param {AonCategory[]} [itemCategories] - Optional categories to restrict the search to.
+   *                                          If not provided, returns items of all categories.
+   *                                          Common equipment categories include: "armor", "equipment", 
+   *                                          "shield", "weapon", "siege-weapon", and "vehicle".
+   * @returns {Promise<AonItem[]>} Promise resolving to an array of all items at the specified level
+   * @throws {Error} if the retrieval operation fails
+   * 
+   * @example
+   * ```typescript
+   * // Get all level 5 items (including creatures, spells, etc.)
+   * const level5Items = await client.getItemsByLevel(5);
+   * 
+   * // Get only level 3 weapons and armor
+   * const combatItems = await client.getItemsByLevel(3, ['weapon', 'armor']);
+   * 
+   * // Get only equipment-related items
+   * const equipmentItems = await client.getItemsByLevel(4, ['armor', 'equipment', 'shield', 'weapon']);
+   * ```
+   */
+  async getItemsByLevel(
+    level: number, 
+    itemCategories?: AonCategory[]
+  ): Promise<AonItem[]> {
+    if (level < 0 || level > 25) {
+      throw new Error('Item level must be between 0 and 25');
+    }
+
+    const allItems: AonItem[] = [];
+    const pageSize = 250; // Fetch more items per request to minimize API calls
+    
+    try {
+      // Build the query with proper typing
+      interface ElasticsearchQuery {
+        bool: {
+          must: Array<Record<string, unknown>>;
+          must_not?: Array<Record<string, unknown>>;
+          [key: string]: unknown;
+        };
+        [key: string]: unknown;
+      }
+
+      const query: ElasticsearchQuery = {
+        bool: {
+          must: [
+            { term: { level } }
+          ],
+          must_not: [
+            // Exclude non-equipment categories by default unless explicitly requested
+            ...(!itemCategories ? [
+              { term: { category: 'creature' } },
+              { term: { category: 'spell' } },
+              { term: { category: 'feat' } },
+              { term: { category: 'hazard' } },
+              { term: { category: 'ritual' } },
+              { term: { category: 'class-feature' } },
+              { term: { category: 'ancestry' } },
+              { term: { category: 'class' } },
+              { term: { category: 'archetype' } },
+              { term: { category: 'background' } },
+              { term: { category: 'curse' } },
+              { term: { category: 'disease' } },
+              { term: { category: 'kingdom-structure' } },
+              { term: { category: 'kingdom-event' } },
+              { term: { category: 'weather-hazard' } }
+            ] : [
+              // If categories are specified, only exclude creatures unless explicitly included
+              ...(!itemCategories.includes('creature') ? [{ term: { category: 'creature' } }] : [])
+            ])
+          ]
+        }
+      };
+
+      // If categories are provided, add them to the query
+      if (itemCategories && itemCategories.length > 0) {
+        // Validate all categories first
+        itemCategories.forEach(category => this.validateCategory(category));
+        
+        // If only one category, use a simple term query
+        if (itemCategories.length === 1) {
+          query.bool.must.push({ term: { category: itemCategories[0] } });
+        } else {
+          // If multiple categories, use a terms query (OR condition)
+          query.bool.must.push({ 
+            terms: { 
+              category: itemCategories 
+            } 
+          });
+        }
+      } else {
+        // If no categories provided, default to equipment-related categories
+        query.bool.must.push({
+          terms: {
+            category: ['armor', 'equipment', 'shield', 'weapon', 'siege-weapon', 'vehicle']
+          }
+        });
+      }
+
+      // Handle pagination
+      let from = 0;
+      let hasMoreItems = true;
+      
+      while (hasMoreItems) {
+        const search = await this.client.search({
+          index: config.index,
+          query,
+          from,
+          size: pageSize,
+          sort: [{ "name.keyword": { order: "asc" } }],
+          // Request specific fields including price and id
+          _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
+        });
+        
+        if (!search.hits?.hits || search.hits.hits.length === 0) {
+          hasMoreItems = false;
+          continue;
+        }
+        
+        const items = search.hits.hits.map((hit) => {
+          const item = hit._source as AonItem;
+          
+          // Add URL to the item if it's not already present
+          if (!item.url) {
+            item.url = this.constructAonUrl(item);
+          }
+          
+          // Ensure price is present and formatted consistently
+          if (item.price === undefined) {
+            // Default price format if not available in the data
+            item.price = "—";
+          } else if (typeof item.price === 'number') {
+            // Format price as "X gp" if it's a number
+            item.price = `${item.price} gp`;
+          }
+          
+          return item;
+        });
+        
+        allItems.push(...items);
+        
+        // Check if we got fewer items than requested, meaning we've reached the end
+        if (items.length < pageSize) {
+          hasMoreItems = false;
+        } else {
+          from += pageSize;
+        }
+      }
+      
+      return allItems;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error retrieving items of level ${level}:`, errorMessage);
+      throw new Error(`Failed to retrieve items of level ${level}: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Additional information about the search functionality
-   * @description This method performs an exact match search first, then falls back to fuzzy search
    */
   /**
    * Search for items in a category

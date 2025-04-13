@@ -10,6 +10,10 @@ export interface AonItem {
   description?: string;
   /** Optional detailed text content of the item */
   text?: string;
+  /** URL to the item's page on Archives of Nethys */
+  url?: string;
+  /** Price of the item in gold pieces */
+  price?: string | number;
   /** Additional properties that may be present in the item */
   [key: string]: unknown;
 }
