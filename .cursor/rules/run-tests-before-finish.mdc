@@ -1,0 +1,21 @@
+---
+name: Run Tests Before Finishing
+description: Ensures tests and linters are run before completing any task
+globs: ["src/**/*.ts", "src/**/*.js"]
+alwaysApply: true
+---
+
+# Run Tests Before Completing Tasks
+
+Always run tests and linters before completing a task to ensure code quality and prevent regressions.
+
+## Testing Requirements
+1. Run `npm test` to execute all unit tests
+2. Run `npm run lint` to check for code style issues
+3. Fix any failing tests or linting errors before submitting changes
+
+## Benefits
+- Catches bugs early in the development process
+- Ensures consistent code quality
+- Prevents breaking changes from being introduced
+- Maintains project stability

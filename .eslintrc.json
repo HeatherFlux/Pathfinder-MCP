@@ -1,0 +1,81 @@
+{
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:jsdoc/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "jsdoc"
+  ],
+  "ignorePatterns": ["dist/**/*", "src/**/*.test.ts", "src/**/*.integration.test.ts"],
+  "rules": {
+    // TypeScript rules
+    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+
+    // JSDoc rules
+    "jsdoc/require-jsdoc": ["warn", {
+      "require": {
+        "FunctionDeclaration": true,
+        "MethodDefinition": false,
+        "ClassDeclaration": true,
+        "ArrowFunctionExpression": false,
+        "FunctionExpression": false
+      }
+    }],
+    "jsdoc/require-description": "warn",
+    "jsdoc/require-param": "warn",
+    "jsdoc/require-returns": "warn",
+    "jsdoc/require-throws": "warn",
+    "jsdoc/check-param-names": "warn",
+    "jsdoc/check-tag-names": "warn",
+    "jsdoc/check-types": "warn",
+    "jsdoc/empty-tags": "warn",
+    "jsdoc/no-multi-spaces": "warn",
+    "jsdoc/require-param-type": "warn",
+    "jsdoc/require-returns-type": "warn",
+    "jsdoc/valid-types": "warn"
+  },
+  "settings": {
+    "jsdoc": {
+      "mode": "typescript"
+    }
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.test.ts", "src/**/*.spec.ts", "**/test/**/*.ts"],
+      "env": {
+        "node": true,
+        "jest": true
+      },
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "jsdoc/require-jsdoc": "off",
+        "jsdoc/require-description": "off",
+        "jsdoc/require-param": "off",
+        "jsdoc/require-returns": "off",
+        "jsdoc/require-throws": "off",
+        "jsdoc/check-param-names": "off",
+        "jsdoc/check-tag-names": "off",
+        "jsdoc/check-types": "off",
+        "jsdoc/empty-tags": "off",
+        "jsdoc/no-multi-spaces": "off",
+        "jsdoc/require-param-type": "off",
+        "jsdoc/require-returns-type": "off",
+        "jsdoc/valid-types": "off"
+      }
+    }
+  ]
+} 
