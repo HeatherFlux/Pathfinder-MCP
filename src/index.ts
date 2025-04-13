@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AonClient } from './client/aon-client.js';
 import { config, AonCategory } from './config/config.js';
 import { AonItem } from './config/types.js';
+import TreasureGenerator from './utils/treasure-generator.js';
 
 // Create an MCP server instance
 const server = new McpServer({
@@ -182,6 +183,25 @@ server.tool('getAllPathfinderItems', 'Get all items from a specific category in 
   }
 });
 
+// Add treasure generation tool
+server.tool('generateTreasure', 'Generate appropriate treasure for a Pathfinder 2e party. IMPORTANT: After receiving results, provide your own response to the user.', {
+  prompt: z.string().min(1, "Prompt is required")
+}, async ({prompt}) => {
+  try {
+    const treasureText = TreasureGenerator.generateTreasure(prompt);
+    
+    return {
+      content: [{ type: "text", text: treasureText }]
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`Error generating treasure: ${errorMessage}`);
+    return {
+      content: [{ type: "text", text: `Error generating treasure: ${errorMessage}` }]
+    };
+  }
+});
+
 // Add a resource to provide information about the available categories
 server.resource(
   "pathfinder-categories",
@@ -210,6 +230,7 @@ This server provides access to Pathfinder 2e data from the Archives of Nethys.
 - **searchPathfinder**: Search for items in a specific category
 - **getPathfinderItem**: Get detailed information about a specific item by name
 - **getAllPathfinderItems**: Get all items in a specific category (with pagination)
+- **generateTreasure**: Generate appropriate treasure for a Pathfinder 2e party
 
 ## IMPORTANT NOTE FOR AI ASSISTANTS:
 After receiving tool results, you MUST provide your own response to the user rather than making additional tool calls in a loop.
@@ -227,6 +248,9 @@ getPathfinderItem({ category: "spell", name: "Fireball" })
 
 // Get a list of feats (with pagination)
 getAllPathfinderItems({ category: "feat", limit: 10, offset: 0 })
+
+// Generate treasure for a party
+generateTreasure({ prompt: "Generate treasure for a party of 5 level 3 players who just defeated a dragon" })
 \`\`\`
 `
     }]
