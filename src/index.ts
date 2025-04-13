@@ -183,21 +183,41 @@ server.tool('getAllPathfinderItems', 'Get all items from a specific category in 
   }
 });
 
-// Add treasure generation tool
-server.tool('generateTreasure', 'Generate appropriate treasure for a Pathfinder 2e party. IMPORTANT: After receiving results, provide your own response to the user.', {
-  prompt: z.string().min(1, "Prompt is required")
-}, async ({prompt}) => {
+// Generate treasure for a party based on prompt
+server.tool('generateTreasure', 'Generate appropriate treasure for a Pathfinder 2e party. IMPORTANT: After receiving results, use other MCP tools to get the pathfinder items and consumables for the treasure.', {
+  partyLevel: z.number().int().min(1).max(20).default(1).describe("The level of the party (1-20)"),
+  partySize: z.number().int().min(1).max(8).default(4).describe("The number of players in the party (1-8)"),
+  isSandbox: z.boolean().default(false).describe("Whether this is a sandbox/megadungeon campaign (adds extra treasure)")
+}, async ({partyLevel, partySize, isSandbox}) => {
   try {
-    const treasureText = TreasureGenerator.generateTreasure(prompt);
+    // Calculate the treasure budget
+    const budget = TreasureGenerator.calculateTreasureBudget(partyLevel, partySize, isSandbox);
+    
+    if (!budget) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Could not generate a treasure budget for a level ${partyLevel} party. Please ensure the level is between 1 and 20.`
+        }]
+      };
+    }
+    
+    // Format the budget into a readable response
+    const result = TreasureGenerator.formatTreasureBudget(budget, {partyLevel, partySize, isSandbox});
     
     return {
-      content: [{ type: "text", text: treasureText }]
+      content: [{ 
+        type: "text", 
+        text: result
+      }]
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    console.error(`Error generating treasure: ${errorMessage}`);
     return {
-      content: [{ type: "text", text: `Error generating treasure: ${errorMessage}` }]
+      content: [{ 
+        type: "text", 
+        text: `Error generating treasure: ${errorMessage}`
+      }]
     };
   }
 });
@@ -230,7 +250,7 @@ This server provides access to Pathfinder 2e data from the Archives of Nethys.
 - **searchPathfinder**: Search for items in a specific category
 - **getPathfinderItem**: Get detailed information about a specific item by name
 - **getAllPathfinderItems**: Get all items in a specific category (with pagination)
-- **generateTreasure**: Generate appropriate treasure for a Pathfinder 2e party
+- **generateTreasure**: Generate appropriate treasure for a Pathfinder 2e party based on a prompt
 
 ## IMPORTANT NOTE FOR AI ASSISTANTS:
 After receiving tool results, you MUST provide your own response to the user rather than making additional tool calls in a loop.
@@ -250,8 +270,30 @@ getPathfinderItem({ category: "spell", name: "Fireball" })
 getAllPathfinderItems({ category: "feat", limit: 10, offset: 0 })
 
 // Generate treasure for a party
-generateTreasure({ prompt: "Generate treasure for a party of 5 level 3 players who just defeated a dragon" })
+generateTreasure({ partyLevel: 5, partySize: 4, isSandbox: false })
 \`\`\`
+
+## Treasure Generation Details
+
+The **generateTreasure** tool will:
+
+1. Generate an appropriate treasure budget according to Pathfinder 2e rules based on these parameters:
+   - **partyLevel**: The level of the party (1-20)
+   - **partySize**: The number of players in the party (1-8)
+   - **isSandbox**: Whether this is a sandbox campaign (adds extra treasure)
+
+2. Provide a complete treasure budget that includes:
+   - Total treasure value
+   - Appropriate permanent items by level and quantity
+   - Appropriate consumable items by level and quantity
+   - Appropriate currency
+
+You should use the other MCP tools to get the pathfinder items and consumables for the treasure on behalf of the user.
+Example parameter combinations:
+- \`{ partyLevel: 5, partySize: 4, isSandbox: false }\` - Standard party at level 5
+- \`{ partyLevel: 10, partySize: 6, isSandbox: false }\` - Large party at level 10
+- \`{ partyLevel: 8, partySize: 4, isSandbox: true }\` - Standard party in a sandbox campaign
+- \`{ partyLevel: 3, partySize: 5, isSandbox: true }\` - Large party in a megadungeon
 `
     }]
   })
