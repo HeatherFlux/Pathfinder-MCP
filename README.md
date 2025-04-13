@@ -1,242 +1,228 @@
 # Pathfinder-MCP
 
-A powerful tool for querying and retrieving information from the Pathfinder 2e Archives of Nethys. Pathfinder-MCP provides context-aware responses to user queries about spells, classes, rules, and other game elements.
+A Model Context Protocol (MCP) server that provides access to Pathfinder 2e data from the Archives of Nethys (AON). This tool enables AI assistants like Claude to access and provide accurate information about Pathfinder 2e rules, spells, feats, and more.
 
 ## Features
 
-- 🔍 Intelligent question analysis and categorization
-- 📚 Comprehensive spell detection and handling
-- 🎯 Multi-category search support
-- ⚡ Fast and accurate responses
-- 🧪 Comprehensive test coverage
-- 📝 Clear error handling and user feedback
+- 🔍 Search for Pathfinder 2e content across 21 categories including spells, feats, classes, and more
+- 📚 Retrieve detailed information about specific game elements
+- 🎯 Get complete lists of items within categories
+- ⚡ Optimized search with intelligent query handling
+- 🧠 Designed for use with MCP-compatible AI assistants
 
 ## How It Works
 
-Pathfinder-MCP uses a sophisticated question analysis system to understand user queries and retrieve relevant information from the Archives of Nethys. Here's how it works:
+Pathfinder-MCP provides a standardized MCP interface between AI assistants and the Pathfinder 2e Archives of Nethys data. It offers three main tools:
 
-1. **Question Analysis**
-   - Analyzes user queries for keywords and context
-   - Identifies relevant categories (spells, classes, feats, etc.)
-   - Detects spell names and game-specific terminology
+1. **searchPathfinder** - Search within a specific category using a query string
+2. **getPathfinderItem** - Get detailed information about a specific item by name and category
+3. **getAllPathfinderItems** - List all items in a category with pagination support
 
-2. **Search Processing**
-   - Searches the Archives of Nethys for relevant information
-   - Filters and prioritizes results based on query context
-   - Returns structured responses for easy consumption
+The server connects to the Archives of Nethys Elasticsearch instance to provide up-to-date game information.
 
-3. **Response Formatting**
-   - Formats responses for optimal readability
-   - Includes relevant context and source information
-   - Provides clear feedback for invalid queries
-
-## Getting Started
+## Installation
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
-- Elasticsearch instance (for data storage) if not using AON
+- Node.js (v18 or higher)
+- npm, yarn, or pnpm
 
-### Installation
+### Setup
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/Pathfinder-MCP.git
+   git clone https://github.com/HeatherFlux/Pathfinder-MCP.git
    cd Pathfinder-MCP
    ```
 
 2. Install dependencies:
    ```bash
    npm install
+   # or
+   yarn install
+   # or
+   pnpm install
    ```
 
-3. Configure environment variables:
-   Create a `.env` file in the root directory with the following:
-   ```
-   ELASTICSEARCH_URL=your_elasticsearch_url
-   PORT=3000
-   ```
-
-### Running the Application
-
-1. Start the development server:
+3. Build the project:
    ```bash
-   npm run dev
+   npm run build
+   # or
+   yarn build
+   # or
+   pnpm build
    ```
 
-2. The server will start on `http://localhost:3000`
+## Usage
 
-### Running with npx
+### Starting the Server
 
-You can run the server directly using npx without installing it globally:
+To start the MCP server:
 
 ```bash
-npx pathfinder-mcp
+npm start
+# or
+yarn start
+# or
+pnpm start
 ```
 
-Or with specific options:
-```bash
-npx pathfinder-mcp --port 3001
-```
+This will start the server using stdio transport, making it compatible with MCP-enabled applications.
 
 ### Using with Claude
 
-To use Pathfinder-MCP with Claude Desktop:
+Claude can interact with the Pathfinder-MCP server to provide accurate Pathfinder 2e information:
 
-1. Open Claude Desktop and go to Settings (from the Claude menu, not the in-app settings)
+1. Configure Claude Desktop to use the Pathfinder-MCP server:
+   - Open Claude Desktop settings
+   - Go to the MCP section
+   - Add a new server configuration for Pathfinder-MCP
 
-2. Click on "Developer" in the left sidebar, then click "Edit Config"
+2. Once configured, you can ask Claude about Pathfinder 2e content, such as:
+   - "Tell me about the Fireball spell in Pathfinder 2e"
+   - "What are the abilities of the Fighter class?"
+   - "Explain the Power Attack feat"
 
-3. This will open the configuration file located at:
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+Claude will use the MCP server to retrieve accurate information from the Archives of Nethys.
 
-4. Add the Pathfinder-MCP server configuration:
-   ```json
-   {
-     "mcpServers": {
-       "pathfinder-mcp": {
-         "command": "npx",
-         "args": ["pathfinder-mcp"]
-       }
-     }
-   }
-   ```
+## Available Categories
 
-5. Save the configuration file and restart Claude Desktop
+Pathfinder-MCP supports the following content categories:
 
-6. You can now ask Claude questions about Pathfinder 2e rules, spells, and other game elements. For example:
-   ```
-   Tell me about the Fireball spell in Pathfinder 2e.
-   ```
+- `action` - Actions and activities
+- `ancestry` - Character ancestries
+- `archetype` - Character archetypes
+- `armor` - Armor items
+- `article` - General articles and rules explanations
+- `background` - Character backgrounds
+- `class` - Character classes
+- `creature` - Monsters and NPCs
+- `creature-family` - Groups of related creatures
+- `deity` - Gods and divine entities
+- `equipment` - General equipment items
+- `feat` - Character feats
+- `hazard` - Traps and environmental hazards
+- `rules` - Game rules
+- `skill` - Character skills
+- `shield` - Shield items
+- `spell` - Spells and magical abilities
+- `source` - Source books and materials
+- `trait` - Traits and keywords
+- `weapon` - Weapon items
+- `weapon-group` - Categories of weapons
 
-Note: Claude Desktop will ask for your permission before executing any MCP commands.
+## Example Queries
 
-### Using with Cursor
+Here are some examples of how to use the MCP tools:
 
-To integrate Pathfinder-MCP with Cursor:
+### Searching for content
+```
+// Search for fire-related spells
+searchPathfinder({ category: "spell", query: "fire" })
 
-1. Start the server in development mode:
-   ```bash
-   npx pathfinder-mcp --dev
-   ```
+// Find feats related to striking
+searchPathfinder({ category: "feat", query: "strike" })
 
-2. In Cursor:
-   - Open Settings (⌘, or Ctrl+,)
-   - Navigate to "AI" settings
-   - Under "Model Context Protocol", click "Add Server"
-   - Enter the following configuration:
-     ```json
-     {
-       "name": "Pathfinder-MCP",
-       "url": "http://localhost:3000",
-       "enabled": true
-     }
-     ```
-   - Save the configuration
+// Look up fighter class information
+searchPathfinder({ category: "class", query: "fighter" })
+```
 
-3. Use natural language queries in your code comments:
-   ```typescript
-   // @mcp What are the rules for casting Fireball?
-   ```
+### Getting specific items
+```
+// Get detailed information about the Fireball spell
+getPathfinderItem({ category: "spell", name: "Fireball" })
 
-4. For debugging and inspection:
-   ```bash
-   npm run inspect
-   ```
-   This will launch the MCP Inspector to help debug and monitor the server.
+// Look up the Power Attack feat
+getPathfinderItem({ category: "feat", name: "Power Attack" })
 
-Note: The server must be running for Cursor to access the Pathfinder 2e context. You can verify the connection in Cursor's AI settings panel.
+// Get information about the Fighter class
+getPathfinderItem({ category: "class", name: "Fighter" })
+```
 
-### Running Tests
+### Listing items in a category
+```
+// Get the first 20 spells
+getAllPathfinderItems({ category: "spell" })
 
-1. Run all tests:
-   ```bash
-   npm test
-   ```
+// Get 10 feats, starting from the 20th feat
+getAllPathfinderItems({ category: "feat", limit: 10, offset: 20 })
+```
 
-2. Run tests with coverage:
-   ```bash
-   npm run test:coverage
-   ```
+## Development
 
-## API Usage
+### Running in Development Mode
 
-### Endpoints
+To run the server in development mode with automatic reloading:
 
-- `POST /context`
-  - Accepts a JSON body with a `question` field
-  - Returns context from the Archives of Nethys
-
-Example request:
 ```bash
-curl -X POST http://localhost:3000/context \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Tell me about the Fireball spell"}'
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
+
+### Testing
+
+Run the test suite:
+
+```bash
+npm test
+# or
+yarn test
+# or
+pnpm test
+```
+
+### Linting
+
+Run ESLint to check code quality:
+
+```bash
+npm run lint
+# or
+yarn lint
+# or
+pnpm lint
+```
+
+To automatically fix lint issues:
+
+```bash
+npm run lint:fix
+# or
+yarn lint:fix
+# or
+pnpm lint:fix
+```
+
+### Debugging
+
+The MCP Inspector can be used to debug the server:
+
+```bash
+npm run inspect
+# or
+yarn inspect
+# or
+pnpm inspect
 ```
 
 ## Contributing
 
-We welcome contributions! Here's how you can help:
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. **Make your changes**
-4. **Run tests**
-   ```bash
-   npm test
-   ```
-5. **Commit your changes**
-   ```bash
-   git commit -m "Description of your changes"
-   ```
-6. **Push to your branch**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-7. **Create a Pull Request**
-
-### Contribution Guidelines
-
-- Follow the existing code style
-- Write tests for new features
-- Update documentation as needed
-- Keep commits focused and atomic
-- Provide clear commit messages
-
-## Project Structure
-
-```
-Pathfinder-MCP/
-├── src/
-│   ├── api/             # Server and API-related code
-│   │   ├── server.ts    # Express server implementation
-│   ├── client/          # Client code for external services
-│   │   └── aon-client.ts # Archives of Nethys client
-│   ├── config/          # Configuration and type definitions
-│   │   ├── config.ts    # Configuration settings
-│   │   └── types.ts     # Common type definitions
-│   ├── mcp/             # MCP implementation
-│   │   └── mcp.ts       # Main MCP class implementation
-│   ├── utils/           # Utility functions and example code
-│   │   └── example.ts   # Example usage
-│   └── index.ts         # Application entry point and exports
-├── tests/               # Test files
-├── memory-bank/         # Project documentation
-├── .env                 # Environment variables
-├── package.json         # Project dependencies
-└── README.md            # Project documentation
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
-- Pathfinder 2e Archives of Nethys for providing the game data
-- All contributors who have helped improve this project 
+- [Archives of Nethys](https://2e.aonprd.com/) for providing the Pathfinder 2e game data
+- [Model Context Protocol](https://modelcontextprotocol.ai/) for the MCP framework 
