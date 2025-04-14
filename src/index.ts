@@ -295,8 +295,7 @@ The **getItemsByLevel** tool is designed specifically for treasure generation an
    - **level**: The item level to search for
    - **categories**: (Optional) Specific categories to include in the search avoid this unles directly asked for treasure generation
 
-
-This tool works well with generateTreasure to find specific items to include in treasure hoards.
+This tool works well with generateTreasure to find specific items to include in treasure hoards also always returns urls and prices.
 `
     }]
   })

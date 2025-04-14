@@ -12,6 +12,8 @@ export interface AonItem {
   text?: string;
   /** URL to the item's page on Archives of Nethys */
   url?: string;
+  /** Formatted URL with Markdown link syntax */
+  formatted_url?: string;
   /** Price of the item in gold pieces */
   price?: string | number;
   /** Additional properties that may be present in the item */

@@ -21,7 +21,7 @@ export function formatItem(item: AonItem): string {
     }
     
     // Add any other properties that might be present
-    const standardProps = ['name', 'category', 'description', 'text'];
+    const standardProps = ['name', 'category', 'description', 'text', 'formatted_url'];
     const additionalProps = Object.entries(item)
       .filter(([key]) => !standardProps.includes(key))
       .filter(([_, value]) => value !== undefined && value !== null);
@@ -29,7 +29,17 @@ export function formatItem(item: AonItem): string {
     if (additionalProps.length > 0) {
       text += '\n\n## Additional Details\n';
       
+      // Display URL first if available
+      if (item.formatted_url) {
+        text += `\n**URL**: ${item.formatted_url}`;
+      } else if (item.url) {
+        text += `\n**URL**: [${item.url}](${item.url})`;
+      }
+      
       for (const [key, value] of additionalProps) {
+        // Skip URL since we already handled it
+        if (key === 'url') continue;
+        
         // Format the key as a readable label
         const label = key
           .replace(/([A-Z])/g, ' $1') // Add space before capital letters

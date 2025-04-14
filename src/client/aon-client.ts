@@ -117,6 +117,11 @@ export class AonClient {
           item.url = this.constructAonUrl(item);
         }
         
+        // Add formatted URL with Markdown link
+        if (item.url && !item.formatted_url) {
+          item.formatted_url = `[${item.name}](${item.url})`;
+        }
+        
         // Ensure price is present and formatted consistently
         if (item.price === undefined) {
           item.price = "—";
@@ -240,6 +245,16 @@ export class AonClient {
 
       if (exactSearch.hits?.hits && exactSearch.hits.hits.length > 0) {
         result = exactSearch.hits.hits[0]._source as AonItem;
+        
+        // Add URL if not present
+        if (!result.url) {
+          result.url = this.constructAonUrl(result);
+        }
+        
+        // Add formatted URL with Markdown link
+        if (result.url && !result.formatted_url) {
+          result.formatted_url = `[${result.name}](${result.url})`;
+        }
       } else {
         // If no exact match, try a more lenient search
         const fuzzySearch = await this.client.search({
@@ -349,6 +364,11 @@ export class AonClient {
         // Add URL to the item
         if (!item.url) {
           item.url = this.constructAonUrl(item);
+        }
+        
+        // Add formatted URL with Markdown link
+        if (item.url && !item.formatted_url) {
+          item.formatted_url = `[${item.name}](${item.url})`;
         }
         
         // Ensure price is present and formatted consistently
@@ -541,6 +561,11 @@ export class AonClient {
           // Add URL to the item if it's not already present
           if (!item.url) {
             item.url = this.constructAonUrl(item);
+          }
+          
+          // Add formatted URL with Markdown link
+          if (item.url && !item.formatted_url) {
+            item.formatted_url = `[${item.name}](${item.url})`;
           }
           
           // Ensure price is present and formatted consistently
