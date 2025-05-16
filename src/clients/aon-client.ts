@@ -1,6 +1,6 @@
 import { Client } from "@elastic/elasticsearch";
-import { config, AonCategory } from "../config/config.js";
-import { AonItem } from "../config/types.js";
+import { config, AonCategory } from "../types/config.js";
+import { AonItem } from "../types/types.js";
 
 /**
  * Error class for invalid category errors

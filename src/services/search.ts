@@ -1,4 +1,4 @@
-import { AonItem } from "../config/types.js";
+import { AonItem } from "../types/types.js";
 import { formatItem } from "./items.js";
 
 /**

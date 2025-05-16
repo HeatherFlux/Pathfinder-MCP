@@ -1,4 +1,4 @@
-import TreasureGenerator from '../../utils/treasure-generator.js';
+import TreasureGenerator from '../../services/treasure-generator.js';
 
 /**
  * Generate appropriate treasure for a Pathfinder 2e party

@@ -1,7 +1,7 @@
-import { AonClient } from "../../client/aon-client.js";
-import CraftingCalculator, { CraftingOptions } from "../../utils/crafting-calculator.js";
-import { formatCraftingRequirements } from "../../utils/crafting-formatter.js";
-import { AonCategory } from "../../config/config.js";
+import { AonClient } from "../../clients/aon-client.js";
+import CraftingCalculator, { CraftingOptions } from "../../services/crafting-calculator.js";
+import { formatCraftingRequirements } from "../../services/crafting-formatter.js";
+import { AonCategory } from "../../types/config.js";
 
 /**
  * Get crafting requirements for a Pathfinder 2e item

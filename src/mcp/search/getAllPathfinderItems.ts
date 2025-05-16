@@ -1,5 +1,5 @@
-import { AonClient } from "../../client/aon-client.js";
-import { AonCategory } from "../../config/config.js";
+import { AonClient } from "../../clients/aon-client.js";
+import { AonCategory } from "../../types/config.js";
 
 /**
  * Get all items from a specific category in the Pathfinder Archives of Nethys

@@ -1,6 +1,6 @@
-import { AonClient } from "../../client/aon-client.js";
-import { formatSearchResults } from "../../utils/search.js";
-import { AonCategory } from "../../config/config.js";
+import { AonClient } from "../../clients/aon-client.js";
+import { formatSearchResults } from "../../services/search.js";
+import { AonCategory } from "../../types/config.js";
 
 /**
  * Search the Pathfinder Archives of Nethys for information about a specific category

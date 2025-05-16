@@ -1,5 +1,5 @@
-import CraftingCalculator, { CraftingRequirements as CalculatorRequirements } from '../utils/crafting-calculator.js';
-import { AonItem } from "../config/types.js";
+import CraftingCalculator, { CraftingRequirements as CalculatorRequirements } from '../../services/crafting-calculator.js';
+import { AonItem } from "../../types/types.js";
 
 // Define interfaces
 interface CraftingParams {

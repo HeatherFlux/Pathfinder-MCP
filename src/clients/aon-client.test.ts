@@ -1,5 +1,5 @@
-import { AonClient, InvalidCategoryError } from "./aon-client.js";
-import { AonCategory } from "../config/config.js";
+import { AonClient, InvalidCategoryError } from "../clients/aon-client.js";
+import { AonCategory } from "../types/config.js";
 
 describe("AonClient", () => {
   describe("searchCategory", () => {

@@ -1,5 +1,5 @@
 import CraftingCalculator, { CraftingOptions } from './crafting-calculator.js';
-import { AonItem } from '../config/types.js';
+import { AonItem } from '../types/types.js';
 
 describe('CraftingCalculator', () => {
   // Mock items

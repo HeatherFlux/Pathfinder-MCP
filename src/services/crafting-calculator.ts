@@ -1,4 +1,4 @@
-import { AonItem } from "../config/types.js";
+import { AonItem } from "../types/types.js";
 import { 
   DCS_BY_LEVEL, 
   RARITY_DC_ADJUSTMENTS, 
@@ -6,7 +6,7 @@ import {
   CRAFTING_FEAT_REQUIREMENTS,
   COMPLEX_CRAFTING_SETUP_TIME,
   RUSH_REDUCTIONS
-} from './crafting-data.js';
+} from '../types/crafting-data.js';
 
 /**
  * Interface for crafting options

@@ -1,6 +1,6 @@
-import { AonClient } from "../../client/aon-client.js";
-import { formatItem } from "../../utils/items.js";
-import { AonCategory } from "../../config/config.js";
+import { AonClient } from "../../clients/aon-client.js";
+import { formatItem } from "../../services/items.js";
+import { AonCategory } from "../../types/config.js";
 
 /**
  * Get detailed information about a specific Pathfinder item by name and category

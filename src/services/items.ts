@@ -1,4 +1,4 @@
-import { AonItem } from "../config/types.js";
+import { AonItem } from "../types/types.js";
 
 /**
  * Format an AonItem into readable text with complete details
