@@ -241,69 +241,91 @@ export class AonClient {
         _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
       });
 
-      let result: AonItem | null = null;
+      let mainResult: AonItem | null = null;
 
       if (exactSearch.hits?.hits && exactSearch.hits.hits.length > 0) {
-        result = exactSearch.hits.hits[0]._source as AonItem;
+        mainResult = exactSearch.hits.hits[0]._source as AonItem;
         
         // Add URL if not present
-        if (!result.url) {
-          result.url = this.constructAonUrl(result);
+        if (!mainResult.url) {
+          mainResult.url = this.constructAonUrl(mainResult);
         }
         
-        // Add formatted URL with Markdown link
-        if (result.url && !result.formatted_url) {
-          result.formatted_url = `[${result.name}](${result.url})`;
+        // Format price if present
+        if (mainResult.price !== undefined && typeof mainResult.price === 'number') {
+          mainResult.price = `${mainResult.price} gp`;
         }
+      }
+
+      // Always find similar items, even if we found an exact match
+      const fuzzySearch = await this.client.search({
+        index: config.index,
+        query: {
+          bool: {
+            must: [
+              { term: { category } },
+              { 
+                multi_match: {
+                  query: trimmedName,
+                  fields: ["name^5", "description", "text"],
+                  fuzziness: "AUTO",
+                  minimum_should_match: "60%"
+                } 
+              }
+            ]
+          }
+        },
+        size: 5, // Get up to 5 similar items
+        _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
+      });
+
+      if (!fuzzySearch.hits?.hits || fuzzySearch.hits.hits.length === 0) {
+        // Return the exact match if we found one, otherwise null
+        return mainResult;
+      }
+
+      // Get all similar items and process them
+      const similarItems = fuzzySearch.hits.hits.map(hit => {
+        const item = hit._source as AonItem;
+        
+        // Add URL if not present
+        if (!item.url) {
+          item.url = this.constructAonUrl(item);
+        }
+        
+        // Format price if present
+        if (item.price !== undefined && typeof item.price === 'number') {
+          item.price = `${item.price} gp`;
+        }
+        
+        return item;
+      });
+      
+      if (mainResult) {
+        // If we had an exact match, filter it out from similar items to avoid duplication
+        const uniqueSimilarItems = similarItems.filter(item => 
+          item.name.toLowerCase() !== mainResult!.name.toLowerCase()
+        );
+        
+        // Add similar items to the main result
+        if (uniqueSimilarItems.length > 0) {
+          mainResult.similar_items = uniqueSimilarItems.slice(0, 4); // Limit to 4 similar items
+        }
+        
+        return mainResult;
       } else {
-        // If no exact match, try a more lenient search
-        const fuzzySearch = await this.client.search({
-          index: config.index,
-          query: {
-            bool: {
-              must: [
-                { term: { category } },
-                {
-                  match: {
-                    name: {
-                      query: trimmedName,
-                      fuzziness: "AUTO",
-                      operator: "and"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          size: 1,
-          _source: ["name", "category", "description", "text", "level", "price", "id", "traits"]
-        });
-
-        if (!fuzzySearch.hits?.hits || fuzzySearch.hits.hits.length === 0) {
-          return null;
-        }
-
-        result = fuzzySearch.hits.hits[0]._source as AonItem;
-      }
-
-      // Add URL and format price
-      if (result) {
-        if (!result.url) {
-          result.url = this.constructAonUrl(result);
+        // No exact match found, return the best fuzzy match with others as similar items
+        const result = similarItems[0];
+        if (similarItems.length > 1) {
+          result.similar_items = similarItems.slice(1, 5); // Limit to 4 similar items
         }
         
-        if (result.price === undefined) {
-          result.price = "—";
-        } else if (typeof result.price === 'number') {
-          result.price = `${result.price} gp`;
-        }
+        return result;
       }
-
-      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Error retrieving ${category} item "${name}":`, errorMessage);
-      throw new Error(`Failed to retrieve ${category} item: ${errorMessage}`);
+      throw new Error(`Failed to retrieve ${category} item "${name}": ${errorMessage}`);
     }
   }
 

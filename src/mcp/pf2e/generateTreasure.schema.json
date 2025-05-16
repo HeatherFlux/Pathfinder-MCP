@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "partyLevel": {
+      "default": 1,
+      "description": "The level of the party (1-20)",
+      "maximum": 20,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "partySize": {
+      "default": 4,
+      "description": "The number of players in the party (1-8)",
+      "maximum": 8,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "isSandbox": {
+      "default": false,
+      "description": "Whether this is a sandbox/megadungeon campaign (adds extra treasure)",
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+} 

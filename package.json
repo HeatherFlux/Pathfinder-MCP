@@ -15,7 +15,6 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "inspect": "npx @modelcontextprotocol/inspector",
     "inspect:dev": "npx @modelcontextprotocol/inspector -e NODE_ENV=development node --loader ts-node/esm src/index.ts",
-    "mcp:hello": "node --loader ts-node/esm src/cli/mcp-server.ts",
     "mcp:pathfinder": "node --loader ts-node/esm src/cli/pathfinder-mcp-server.ts"
   },
   "keywords": [

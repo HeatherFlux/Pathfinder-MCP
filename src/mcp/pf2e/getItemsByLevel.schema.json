@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "level": {
+      "description": "The item level to search for (0-25)",
+      "maximum": 25,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "categories": {
+      "description": "Optional categories to include in the search",
+      "items": {
+        "enum": [
+          "action",
+          "ancestry",
+          "archetype",
+          "armor",
+          "article",
+          "background",
+          "class",
+          "creature",
+          "creature-family",
+          "deity",
+          "equipment",
+          "feat",
+          "hazard",
+          "rules",
+          "skill",
+          "shield",
+          "spell",
+          "source",
+          "trait",
+          "weapon",
+          "weapon-group"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": ["level"],
+  "type": "object"
+} 

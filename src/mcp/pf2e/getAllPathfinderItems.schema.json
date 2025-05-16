@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "enum": [
+        "action",
+        "ancestry",
+        "archetype",
+        "armor",
+        "article",
+        "background",
+        "class",
+        "creature",
+        "creature-family",
+        "deity",
+        "equipment",
+        "feat",
+        "hazard",
+        "rules",
+        "skill",
+        "shield",
+        "spell",
+        "source",
+        "trait",
+        "weapon",
+        "weapon-group"
+      ],
+      "type": "string"
+    },
+    "limit": {
+      "default": 20,
+      "description": "Maximum number of items to return",
+      "maximum": 100,
+      "minimum": 1,
+      "type": "number"
+    },
+    "offset": {
+      "default": 0,
+      "description": "Offset for pagination",
+      "minimum": 0,
+      "type": "number"
+    }
+  },
+  "required": ["category"],
+  "type": "object"
+} 

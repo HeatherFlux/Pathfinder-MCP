@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "enum": [
+        "action",
+        "ancestry",
+        "archetype",
+        "armor",
+        "article",
+        "background",
+        "class",
+        "creature",
+        "creature-family",
+        "deity",
+        "equipment",
+        "feat",
+        "hazard",
+        "rules",
+        "skill",
+        "shield",
+        "spell",
+        "source",
+        "trait",
+        "weapon",
+        "weapon-group"
+      ],
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "characterLevel": {
+      "default": 1,
+      "description": "The level of the character crafting the item (1-20)",
+      "maximum": 20,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "proficiency": {
+      "default": "trained",
+      "description": "The character's proficiency in Crafting",
+      "enum": ["untrained", "trained", "expert", "master", "legendary"],
+      "type": "string"
+    },
+    "feats": {
+      "default": [],
+      "description": "The character's crafting-related feats",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "useComplexCrafting": {
+      "default": false,
+      "description": "Whether to use complex crafting rules from Treasure Vault",
+      "type": "boolean"
+    },
+    "rushDays": {
+      "default": 0,
+      "description": "Number of days to rush crafting by (increases DC)",
+      "maximum": 3,
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": ["category", "name"],
+  "type": "object"
+} 

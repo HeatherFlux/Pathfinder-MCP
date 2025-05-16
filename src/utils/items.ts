@@ -21,7 +21,7 @@ export function formatItem(item: AonItem): string {
     }
     
     // Add any other properties that might be present
-    const standardProps = ['name', 'category', 'description', 'text', 'formatted_url'];
+    const standardProps = ['name', 'category', 'description', 'text', 'formatted_url', 'similar_items'];
     const additionalProps = Object.entries(item)
       .filter(([key]) => !standardProps.includes(key))
       .filter(([_, value]) => value !== undefined && value !== null);
@@ -33,7 +33,7 @@ export function formatItem(item: AonItem): string {
       if (item.formatted_url) {
         text += `\n**URL**: ${item.formatted_url}`;
       } else if (item.url) {
-        text += `\n**URL**: [${item.url}](${item.url})`;
+        text += `\n**URL**: [${item.name}](${item.url})`;
       }
       
       for (const [key, value] of additionalProps) {
@@ -55,6 +55,26 @@ export function formatItem(item: AonItem): string {
         
         text += `\n**${label}**: ${displayValue}`;
       }
+    }
+    
+    // Add similar items if they exist
+    if (item.similar_items && item.similar_items.length > 0) {
+      text += '\n\n## Similar Items\n';
+      
+      item.similar_items.forEach((similarItem, index) => {
+        text += `\n### ${index + 1}. ${similarItem.name}`;
+        
+        if (similarItem.url) {
+          text += ` - [View Details](${similarItem.url})`;
+        }
+        
+        if (similarItem.description) {
+          const shortDescription = similarItem.description.length > 150 
+            ? similarItem.description.substring(0, 150) + '...' 
+            : similarItem.description;
+          text += `\n${shortDescription}`;
+        }
+      });
     }
     
     return text;

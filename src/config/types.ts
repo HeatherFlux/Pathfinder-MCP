@@ -16,6 +16,8 @@ export interface AonItem {
   formatted_url?: string;
   /** Price of the item in gold pieces */
   price?: string | number;
+  /** Similar items related to this one (when an exact match isn't found) */
+  similar_items?: AonItem[];
   /** Additional properties that may be present in the item */
   [key: string]: unknown;
 }
