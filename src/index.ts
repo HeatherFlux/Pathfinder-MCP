@@ -75,7 +75,7 @@ server.tool(
 
 server.tool(
   'getItemsByLevel',
-  'Get all items of a specific level',
+  'Get all items of a specific level from the Archives of Nethys. Use this to find level-appropriate equipment, especially after determining treasure budget.',
   {
     level: z.number().min(0).max(25),
     categories: z.array(z.enum(config.targets)).optional()
@@ -93,7 +93,7 @@ server.tool(
 
 server.tool(
   'generateTreasure',
-  'Generate appropriate treasure for a Pathfinder 2e party',
+  'Generate appropriate treasure for a Pathfinder 2e party use this to determine the treasure budget for a given party level and size. and then use other search and get tools to find specific items within that budget.',
   {
     partyLevel: z.number().min(1).max(20).optional(),
     partySize: z.number().min(1).max(8).optional(),
