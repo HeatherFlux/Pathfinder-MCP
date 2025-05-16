@@ -105,7 +105,7 @@ export default class CraftingCalculator {
     const adjustedDC: number = this.adjustDC(baseDC, options.rushDays, options.proficiency);
     
     // Calculate materials and costs
-    const materialCost: number = Math.floor(itemPrice / 2);
+    const materialCost: number = itemPrice / 2;
     
     // Calculate daily cost reduction by proficiency and level
     const dailyReduction: number = this.calculateDailyReduction(characterLevel, options.proficiency);
@@ -312,7 +312,7 @@ export default class CraftingCalculator {
     let reducedTime = baseTime;
     if (rushDays > 0) {
       const maxReduction = RUSH_REDUCTIONS[proficiency]?.days || 0;
-      reducedTime = Math.max(1, baseTime - Math.min(rushDays, maxReduction));
+      reducedTime = baseTime - Math.min(rushDays, maxReduction);
       
       // Special case: if rushing would reduce a consumable to 0 days or less, it takes 4 hours instead
       if (isConsumable && reducedTime <= 0) {

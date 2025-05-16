@@ -31,3 +31,5 @@ coverage
 
 # TypeScript
 *.tsbuildinfo 
+# Cursor
+.cursor

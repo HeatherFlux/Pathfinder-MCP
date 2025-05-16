@@ -1,7 +1,7 @@
 /**
  * MCP Tool for Pathfinder 2e Crafting Calculator
  */
-import { getPathfinderCraftingRequirements } from '../handlers/crafting-handlers.js';
+import { getPathfinderCraftingRequirements } from '../handlers/crafting-handler.ts';
 
 /**
  * MCP Tool definition for calculating crafting requirements

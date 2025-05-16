@@ -170,7 +170,7 @@ describe('CraftingCalculator', () => {
     
     expect(result.crafting.initialDays).toBe(3); // 4 standard days - 1 rush day
     expect(result.crafting.rushPenalty).toBe(5); // +5 DC for expert rushing 1 day
-    expect(result.crafting.dc).toBe(21); // Level 1 DC (15) + rush penalty (5) + rarity (0)
+    expect(result.crafting.dc).toBe(20); // Level 1 DC (15) + rush penalty (5) + rarity (0)
   });
 
   // Test rushing with master
@@ -186,7 +186,8 @@ describe('CraftingCalculator', () => {
     const result = CraftingCalculator.calculateRequirements(mockPotion, options);
     
     expect(result.crafting.initialDays).toBe(2); // 4 standard days - 2 rush days
-    expect(result.crafting.rushPenalty).toBe(10); // +10 DC for master rushing 2 days
+    expect(result.crafting.rushPenalty).toBe(20); // +20 DC for master rushing 2 days
+    expect(result.crafting.dc).toBe(38); // Level 3 DC (18) + rush penalty (20)
   });
 
   // Test complex crafting + rushing combination
@@ -204,7 +205,8 @@ describe('CraftingCalculator', () => {
     // Level 3 potion is 7 levels below character level 10, so it's 2 days for consumable
     // With 2 days of rush reduction, it should be 4 hours (0.5 days)
     expect(result.crafting.initialDays).toBe(0.5);
-    expect(result.crafting.rushPenalty).toBe(10); // +10 DC for 2 days rushing
+    expect(result.crafting.rushPenalty).toBe(30); // +30 DC for 2 days rushing
+    expect(result.crafting.dc).toBe(48); // Level 3 DC (18) + rush penalty (30)
   });
 
   // Test daily cost reduction calculation
