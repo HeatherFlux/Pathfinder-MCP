@@ -10,6 +10,7 @@ import getAllPathfinderItemsImpl from './mcp/search/getAllPathfinderItems.js';
 import generateTreasureImpl from './mcp/treasure/generateTreasure.js';
 import getItemsByLevelImpl from './mcp/search/getItemsByLevel.js';
 import getPathfinderCraftingRequirementsImpl from './mcp/crafting/getPathfinderCraftingRequirements.js';
+import buildEncounterImpl from './mcp/encounter/buildEncounter.js';
 
 // Create MCP server
 const server = new McpServer({
@@ -129,6 +130,27 @@ server.tool(
         type: "text" as const,
         text: result
       }]
+    };
+  }
+);
+
+server.tool(
+  'buildEncounter',
+  'Build a balanced PF2e encounter. Suggests creatures from Archives of Nethys based on party level and desired difficulty. Returns multiple encounter options with XP calculations.',
+  {
+    partyLevel: z.number().min(1).max(20).describe('The level of the party'),
+    partySize: z.number().min(1).max(8).optional().describe('Number of players (default: 4)'),
+    difficulty: z.enum(['trivial', 'low', 'moderate', 'severe', 'extreme']).describe('Encounter difficulty'),
+    creatureTypes: z.array(z.string()).optional().describe('Filter by creature types (e.g., ["undead", "beast"])'),
+    environment: z.string().optional().describe('Environment theme (e.g., "forest", "dungeon", "sky")')
+  },
+  async (args) => {
+    const result = await buildEncounterImpl(args);
+    return {
+      content: result.content.map(c => ({
+        ...c,
+        type: "text" as const
+      }))
     };
   }
 );

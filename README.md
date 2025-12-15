@@ -12,11 +12,15 @@ A Model Context Protocol (MCP) server that provides access to Pathfinder 2e data
 
 ## How It Works
 
-Pathfinder-MCP provides a standardized MCP interface between AI assistants and the Pathfinder 2e Archives of Nethys data. It offers three main tools:
+Pathfinder-MCP provides a standardized MCP interface between AI assistants and the Pathfinder 2e Archives of Nethys data. It offers these main tools:
 
 1. **searchPathfinder** - Search within a specific category using a query string
 2. **getPathfinderItem** - Get detailed information about a specific item by name and category
 3. **getAllPathfinderItems** - List all items in a category with pagination support
+4. **getItemsByLevel** - Get level-appropriate items for treasure generation
+5. **generateTreasure** - Calculate treasure budgets for party level and size
+6. **getPathfinderCraftingRequirements** - Calculate crafting time and costs
+7. **buildEncounter** - Build balanced encounters with XP calculations based on party level and difficulty
 
 The server connects to the Archives of Nethys Elasticsearch instance to provide up-to-date game information.
 
@@ -146,6 +150,27 @@ getAllPathfinderItems({ category: "spell" })
 
 // Get 10 feats, starting from the 20th feat
 getAllPathfinderItems({ category: "feat", limit: 10, offset: 20 })
+```
+
+### Building encounters
+```
+// Build a severe encounter for a level 8 party
+buildEncounter({ partyLevel: 8, difficulty: "severe" })
+
+// Build a moderate encounter with undead creatures
+buildEncounter({ partyLevel: 6, difficulty: "moderate", creatureTypes: ["undead"] })
+
+// Build an encounter themed around a forest environment
+buildEncounter({ partyLevel: 4, partySize: 5, difficulty: "low", environment: "forest" })
+```
+
+### Generating treasure
+```
+// Generate treasure budget for a level 10 party of 4
+generateTreasure({ partyLevel: 10, partySize: 4 })
+
+// Generate treasure for a sandbox/megadungeon campaign
+generateTreasure({ partyLevel: 5, isSandbox: true })
 ```
 
 ## Development
